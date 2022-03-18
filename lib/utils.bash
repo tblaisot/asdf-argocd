@@ -3,7 +3,9 @@
 set -euo pipefail
 
 # TODO: Ensure this is the correct GitHub homepage where releases can be downloaded for argocd.
-GH_REPO="https://github.com/tblaisot/asdf-argocd"
+GH_REPO="https://github.com/argoproj/argo-cd"
+RELEASES_URL="${GH_REPO}/releases"
+
 TOOL_NAME="argocd"
 TOOL_TEST="argocd --version"
 
@@ -30,6 +32,7 @@ list_github_tags() {
     sed 's/^v//' # NOTE: You might want to adapt this sed to remove non-version strings from tags
 }
 
+
 list_all_versions() {
   # TODO: Adapt this. By default we simply list the tag names from GitHub releases.
   # Change this function if argocd has other means of determining installable versions.
@@ -42,7 +45,7 @@ download_release() {
   filename="$2"
 
   # TODO: Adapt the release URL convention for argocd
-  url="$GH_REPO/archive/v${version}.tar.gz"
+  url="$RELEASES_URL/download/v${version}/$TOOL_NAME-$(platform)"
 
   echo "* Downloading $TOOL_NAME release $version..."
   curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
@@ -71,4 +74,15 @@ install_version() {
     rm -rf "$install_path"
     fail "An error ocurred while installing $TOOL_NAME $version."
   )
+}
+
+platform() {
+  local -r os=$(
+    case "$(uname | tr '[:upper:]' '[:lower:]')" in
+      darwin) echo "osx" ;;
+      *) echo "linux" ;;
+    esac
+  )
+
+  echo "${os}-amd64"
 }
